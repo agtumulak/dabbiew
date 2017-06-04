@@ -29,6 +29,7 @@ dabbiew file.csv
 | `k`   | select up                |
 | `.`   | increase selection width |
 | `,`   | decrease selection width |
+| `t`   | toggle header            |
 
 ## Documentation
 To generate the source code documentation do

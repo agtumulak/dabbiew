@@ -41,16 +41,19 @@ def format_line(text, width):
         return ' ' * width
 
 
-def screen(start, end, extents):
+def screen(start, end, extents, offset):
     """Generate column widths or row heights from screen start to end positions.
 
     Indexing for start and end is analogous to python ranges. Start is first 
     screen position that gets drawn. End does not get drawn. Returned tuples 
     correspond to elements that are inside screen box.
 
-    >>> args = (5, 10, [3, 3, 3, 3, 3])
+    >>> args = (5, 10, [3, 3, 3, 3, 3], 0)
     >>> [(col, width, cursor) for col, width, cursor in screen(*args)]
     [(1, 1, 0), (2, 3, 1), (3, 1, 4)]
+    >>> args = (5, 10, [3, 3, 3, 3, 3], 2)
+    >>> [(col, width, cursor) for col, width, cursor in screen(*args)]
+    [(1, 1, 2), (2, 3, 3), (3, 1, 6)]
 
     :param start: screen position start
     :type start: int
@@ -58,6 +61,8 @@ def screen(start, end, extents):
     :type end: int
     :param extents: column widths or row heights
     :type extents: list
+    :param offset: shifts cursor position returned by fixed amount
+    :type offset: int
     :returns: index of element, extent of element, position of element on screen
     :rtype: int, int, int
     """
@@ -66,13 +71,13 @@ def screen(start, end, extents):
         accumulated += extent
         if accumulated > start:
             break
-    yield ind, accumulated - start, 0
+    yield ind, accumulated - start, offset
     for ind, extent in enumerate(extents[ind+1:], start=ind+1):
         if accumulated + extent >= end:
-            yield ind, end - accumulated, accumulated - start
+            yield ind, end - accumulated, offset + accumulated - start
             raise StopIteration
         else:
-            yield ind, extent, accumulated - start
+            yield ind, extent, offset + accumulated - start
             accumulated += extent
 
 
@@ -117,7 +122,8 @@ def origin(current, start, end, extents, screen, moving):
         return current
 
 
-def draw(stdscr, df, x_origin, y_origin, left, right, top, bottom, widths, heights):
+def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
+         origin_y, origin_x, left, right, top, bottom, widths, heights):
     """Refresh display with updated view.
 
     Running line profiler shows this is the slowest part. Will optimize later. 
@@ -127,10 +133,18 @@ def draw(stdscr, df, x_origin, y_origin, left, right, top, bottom, widths, heigh
     :type stdscr: curses.window
     :param df: underlying data to present
     :type df: pandas.DataFrame
-    :param x_origin: x coordinate of leftmost part of view box
-    :type x_origin: int
-    :param y_origin: y coordinate of bottommost part of view box
-    :type y_origin: int
+    :param frozen_y: initial row offset before view box contents are shown
+    :type frozen_y: int
+    :param frozen_x: initial column offset before view box contents are shown
+    :type frozen_x: int
+    :param unfrozen_y: number of rows dedicated to contents of view box
+    :type unfrozen_y: int
+    :param unfrozen_x: number of columns dedicated to contents of view box
+    :type unfrozen_x: int
+    :param origin_y: y coordinate of bottommost part of view box
+    :type origin_y: int
+    :param origin_x: x coordinate of leftmost part of view box
+    :type origin_x: int
     :param left: leftmost column of selection
     :type left: int
     :param right: rightmost column of selection
@@ -144,19 +158,23 @@ def draw(stdscr, df, x_origin, y_origin, left, right, top, bottom, widths, heigh
     :param heights: vertical extent of each row
     :type heights: list
     """
-    screen_y, screen_x = stdscr.getmaxyx()
-    screen_y -= 1 # Avoid cursor going off screen
-    for col, width, x_cursor in screen(x_origin, x_origin + screen_x, widths):
-        for row, height, y_cursor in screen(y_origin, y_origin + screen_y, heights):
-            selected = left <= col <= right and top <= row <= bottom
+    for col, width, x_cursor in screen(origin_x, origin_x + unfrozen_x, widths, frozen_x):
+        # Draw persistent header row
+        col_selected = left <= col <= right
+        col_attribute = curses.A_REVERSE if col_selected else curses.A_NORMAL
+        text = format_line(str(df.columns[col]), width).encode('utf-8')
+        stdscr.addstr(0, x_cursor, text, col_attribute)
+        for row, height, y_cursor in screen(origin_y, origin_y + unfrozen_y, heights, frozen_y):
+            row_selected = top <= row <= bottom
+            selected = col_selected and row_selected
             attribute = curses.A_REVERSE if selected else curses.A_NORMAL
             text = format_line(str(df.iat[row,col]), width).encode('utf-8')
             stdscr.addstr(y_cursor, x_cursor, text, attribute)
     # Clear right margin if theres unused space on the right
-    margin = screen_x - (x_cursor + width)
+    margin = frozen_x + unfrozen_x - (x_cursor + width)
     if margin > 0:
-        for row in range(screen_y):
-            stdscr.addstr(row, x_cursor + width, ' ' * margin, curses.A_NORMAL)
+        for y_cursor in range(frozen_y + unfrozen_y):
+            stdscr.addstr(y_cursor, x_cursor + width, ' ' * margin, curses.A_NORMAL)
     stdscr.refresh()
 
 
@@ -221,18 +239,21 @@ def run(stdscr, df):
     curses.curs_set(0) # invisible cursor
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
-    screen_y -= 1
+    screen_y -= 1 # Avoid writing to last line
+    frozen_y, frozen_x = 1, 0
+    unfrozen_y, unfrozen_x = screen_y - frozen_y, screen_x - frozen_x
     rows, cols = df.shape
     left, right, top, bottom = 0, 0, 0, 0
     heights, widths = [1] * rows, [8] * cols
-    y_origin, x_origin = 0, 0
+    origin_y, origin_x = 0, 0
     moving_down, moving_right = True, True
     resizing = False
 
     while True:
-        x_origin = origin(x_origin, left, right, widths, screen_x, moving_right)
-        y_origin = origin(y_origin, top, bottom, heights, screen_y, moving_down)
-        draw(stdscr, df, x_origin, y_origin, left, right, top, bottom, widths, heights)
+        origin_x = origin(origin_x, left, right, widths, unfrozen_x, moving_right)
+        origin_y = origin(origin_y, top, bottom, heights, unfrozen_y, moving_down)
+        draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
+             origin_y, origin_x, left, right, top, bottom, widths, heights)
         keypress = stdscr.getch()
         if keypress == ord('q'):
             break
@@ -257,6 +278,10 @@ def run(stdscr, df):
         if keypress == ord(','):
             for col in range(left, right+1):
                 widths[col] -= 0 if widths[col] == 2 else 1
+        if keypress == ord('t'):
+            toggle = {0 : 1, 1 : 0}
+            frozen_y = toggle[frozen_y]
+            unfrozen_y = screen_y - frozen_y
 
 
 if __name__ == '__main__':
