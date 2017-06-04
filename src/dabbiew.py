@@ -147,12 +147,10 @@ def draw(stdscr, df, x_origin, y_origin, left, right, top, bottom, widths, heigh
     screen_y, screen_x = stdscr.getmaxyx()
     screen_y -= 1 # Avoid cursor going off screen
     for col, width, x_cursor in screen(x_origin, x_origin + screen_x, widths):
-        series = df.iloc[:,col]
         for row, height, y_cursor in screen(y_origin, y_origin + screen_y, heights):
             selected = left <= col <= right and top <= row <= bottom
             attribute = curses.A_REVERSE if selected else curses.A_NORMAL
-            cell = series.iloc[row]
-            text = format_line(str(cell), width).encode('utf-8')
+            text = format_line(str(df.iat[row,col]), width).encode('utf-8')
             stdscr.addstr(y_cursor, x_cursor, text, attribute)
     # Clear right margin if theres unused space on the right
     margin = screen_x - (x_cursor + width)
