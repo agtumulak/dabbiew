@@ -18,14 +18,17 @@ dabbiew file.csv
 ```
 
 ## Key Bindings
-* `q` quit
-* `v` toggle selection mode
-* `l` select right
-* `j` select down
-* `h` select left
-* `k` select up
-* `.` increase width
-* `,` decrease width
+| Key   | Action                   |
+|-------|--------------------------|
+| `q`   | quit                     |
+| `v`   | toggle selection mode    |
+| `esc` | cancel selection         |
+| `l`   | move right               |
+| `j`   | select down              |
+| `h`   | select left              |
+| `k`   | select up                |
+| `.`   | increase selection width |
+| `,`   | decrease selection width |
 
 ## Documentation
 To generate the source code documentation do
