@@ -221,6 +221,7 @@ def run(stdscr, df):
     curses.curs_set(0) # invisible cursor
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
+    screen_y -= 1
     rows, cols = df.shape
     left, right, top, bottom = 0, 0, 0, 0
     heights, widths = [1] * rows, [8] * cols
