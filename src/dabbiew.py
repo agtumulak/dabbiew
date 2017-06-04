@@ -238,6 +238,10 @@ def run(stdscr, df):
             break
         if keypress == ord('v'):
             resizing = not resizing
+        if keypress == ord('\x1b'): # escape key
+            resizing = False
+            right = left
+            bottom = top
         if keypress == ord('l'):
             left, right, moving_right = advance(left, right, resizing, cols)
         if keypress == ord('j'):
