@@ -73,14 +73,14 @@ def screen(start, end, cum_extents, offset):
     yield ind, cum_extents[ind] - start, offset
     for ind, cum_extent in enumerate(cum_extents[ind+1:], start=ind+1):
         if cum_extent >= end:
-            yield ind,
+            yield (ind,
                   end - cum_extents[ind-1],
-                  offset + cum_extents[ind-1] - start
+                  offset + cum_extents[ind-1] - start)
             raise StopIteration
         else:
-            yield ind,
+            yield (ind,
                   cum_extents[ind] - cum_extents[ind-1],
-                  offset + cum_extents[ind-1] - start
+                  offset + cum_extents[ind-1] - start)
 
 
 def origin(current, start, end, cum_extents, screen, moving):
