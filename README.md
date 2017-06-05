@@ -24,9 +24,9 @@ dabbiew file.csv
 | `v`        | toggle selection mode    |
 | `esc`      | cancel selection         |
 | `l` or `→` | move right               |
-| `j` or `↓` | select down              |
-| `h` or `←` | select left              |
-| `k` or `↑` | select up                |
+| `j` or `↓` | move down                |
+| `h` or `←` | move left                |
+| `k` or `↑` | move up                  |
 | `.`        | increase selection width |
 | `,`        | decrease selection width |
 | `t`        | toggle header            |
