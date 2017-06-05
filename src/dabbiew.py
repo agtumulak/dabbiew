@@ -165,7 +165,12 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
         text = format_line(str(df.columns[col]), width).encode('utf-8')
         stdscr.addstr(0, x_cursor, text, col_attribute)
         for row, height, y_cursor in screen(origin_y, origin_y + unfrozen_y, heights, frozen_y):
+            # Draw persistent index column
             row_selected = top <= row <= bottom
+            row_attribute = curses.A_REVERSE if row_selected else curses.A_NORMAL
+            text = format_line(str(df.index[row]), frozen_x).encode('utf-8')
+            stdscr.addstr(y_cursor, 0, text, row_attribute)
+            # Draw DataFrame contents
             selected = col_selected and row_selected
             attribute = curses.A_REVERSE if selected else curses.A_NORMAL
             text = format_line(str(df.iat[row,col]), width).encode('utf-8')
@@ -175,6 +180,10 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     if margin > 0:
         for y_cursor in range(frozen_y + unfrozen_y):
             stdscr.addstr(y_cursor, x_cursor + width, ' ' * margin, curses.A_NORMAL)
+    # Clear frozen topleft corner
+    for x_cursor in range(frozen_x):
+        for y_cursor in range(frozen_y):
+            stdscr.addstr(y_cursor, x_cursor, ' ', curses.A_NORMAL)
     stdscr.refresh()
 
 
@@ -240,7 +249,7 @@ def run(stdscr, df):
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
     screen_y -= 1 # Avoid writing to last line
-    frozen_y, frozen_x = 1, 0
+    frozen_y, frozen_x = 1, 8
     unfrozen_y, unfrozen_x = screen_y - frozen_y, screen_x - frozen_x
     rows, cols = df.shape
     left, right, top, bottom = 0, 0, 0, 0
@@ -282,6 +291,10 @@ def run(stdscr, df):
             toggle = {0 : 1, 1 : 0}
             frozen_y = toggle[frozen_y]
             unfrozen_y = screen_y - frozen_y
+        if keypress == ord('y'):
+            toggle = {0 : 8, 8 : 0}
+            frozen_x = toggle[frozen_x]
+            unfrozen_x = screen_x - frozen_x
 
 
 if __name__ == '__main__':

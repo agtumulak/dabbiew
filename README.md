@@ -30,6 +30,7 @@ dabbiew file.csv
 | `.`   | increase selection width |
 | `,`   | decrease selection width |
 | `t`   | toggle header            |
+| `y`   | toggle index             |
 
 ## Documentation
 To generate the source code documentation do
