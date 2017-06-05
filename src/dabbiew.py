@@ -264,34 +264,34 @@ def run(stdscr, df):
         draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
              origin_y, origin_x, left, right, top, bottom, widths, heights)
         keypress = stdscr.getch()
-        if keypress == ord('q'):
+        if keypress in [ord('q')]:
             break
-        if keypress == ord('v'):
+        if keypress in [ord('v')]:
             resizing = not resizing
-        if keypress == ord('\x1b'): # escape key
+        if keypress in [ord('\x1b')]: # escape key
             resizing = False
             right = left
             bottom = top
-        if keypress == ord('l'):
+        if keypress in [ord('l'), curses.KEY_RIGHT]:
             left, right, moving_right = advance(left, right, resizing, cols)
-        if keypress == ord('j'):
+        if keypress in [ord('j'), curses.KEY_DOWN]:
             top, bottom, moving_down = advance(top, bottom, resizing, rows)
-        if keypress == ord('h'):
+        if keypress in [ord('h'), curses.KEY_LEFT]:
             left, right, moving_right = retreat(left, right, resizing)
-        if keypress == ord('k'):
+        if keypress in [ord('k'), curses.KEY_UP]:
             top, bottom, moving_down = retreat(top, bottom, resizing)
-        if keypress == ord('.'):
+        if keypress in [ord('.')]:
             moving_right = True
             for col in range(left, right+1):
                 widths[col] += 1
-        if keypress == ord(','):
+        if keypress in [ord(',')]:
             for col in range(left, right+1):
                 widths[col] -= 0 if widths[col] == 2 else 1
-        if keypress == ord('t'):
+        if keypress in [ord('t')]:
             toggle = {0 : 1, 1 : 0}
             frozen_y = toggle[frozen_y]
             unfrozen_y = screen_y - frozen_y
-        if keypress == ord('y'):
+        if keypress in [ord('y')]:
             toggle = {0 : 8, 8 : 0}
             frozen_x = toggle[frozen_x]
             unfrozen_x = screen_x - frozen_x

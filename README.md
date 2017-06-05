@@ -18,19 +18,19 @@ dabbiew file.csv
 ```
 
 ## Key Bindings
-| Key   | Action                   |
-|-------|--------------------------|
-| `q`   | quit                     |
-| `v`   | toggle selection mode    |
-| `esc` | cancel selection         |
-| `l`   | move right               |
-| `j`   | select down              |
-| `h`   | select left              |
-| `k`   | select up                |
-| `.`   | increase selection width |
-| `,`   | decrease selection width |
-| `t`   | toggle header            |
-| `y`   | toggle index             |
+| Key        | Action                   |
+|------------|--------------------------|
+| `q`        | quit                     |
+| `v`        | toggle selection mode    |
+| `esc`      | cancel selection         |
+| `l` or `→` | move right               |
+| `j` or `↓` | select down              |
+| `h` or `←` | select left              |
+| `k` or `↑` | select up                |
+| `.`        | increase selection width |
+| `,`        | decrease selection width |
+| `t`        | toggle header            |
+| `y`        | toggle index             |
 
 ## Documentation
 To generate the source code documentation do
