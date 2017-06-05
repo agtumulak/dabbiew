@@ -192,13 +192,13 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
 def advance(start, end, resizing, boundary, amount):
     """Move down or right.
 
-    >>> advance(0, 0, True, 3)
+    >>> advance(0, 0, True, 3, 1)
     (0, 1, True)
-    >>> advance(0, 1, False, 3)
+    >>> advance(0, 1, False, 3, 1)
     (1, 2, True)
-    >>> advance(1, 2, True, 3)
+    >>> advance(1, 2, True, 3, 1)
     (1, 2, True)
-    >>> advance(1, 2, True, 3)
+    >>> advance(1, 2, True, 3, 1)
     (1, 2, True)
 
     :param start: leftmost column or topmost row
@@ -224,13 +224,13 @@ def advance(start, end, resizing, boundary, amount):
 def retreat(start, end, resizing, amount):
     """Move up or left.
     
-    >>> retreat(1, 2, True)
+    >>> retreat(1, 2, True, 1)
     (1, 1, False)
-    >>> retreat(1, 1, True)
+    >>> retreat(1, 1, True, 1)
     (1, 1, False)
-    >>> retreat(1, 1, False)
+    >>> retreat(1, 1, False, 1)
     (0, 0, False)
-    >>> retreat(0, 0, False)
+    >>> retreat(0, 0, False, 1)
     (0, 0, False)
 
     :param start: leftmost column or topmost row
