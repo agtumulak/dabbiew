@@ -6,6 +6,7 @@ from  __future__ import division, absolute_import, print_function, unicode_liter
 import curses
 import locale
 import pandas as pd
+from collections import deque
 from sys import argv
 
 
@@ -187,7 +188,7 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     stdscr.refresh()
 
 
-def advance(start, end, resizing, boundary):
+def advance(start, end, resizing, boundary, amount):
     """Move down or right.
 
     >>> advance(0, 0, True, 3)
@@ -207,16 +208,19 @@ def advance(start, end, resizing, boundary):
     :type resizing: bool
     :param boundary: total number of columns or rows
     :type boundary: int
+    :param amount: number of columns or rows to advance
+    :type amount: int
     """
+    #TODO: Implement tests for amount
     moving = True
-    if end + 1 < boundary:
-        end += 1
-        if not resizing:
-            start += 1
+    amount = amount if end + amount < boundary else boundary - 1 - end
+    end += amount
+    if not resizing:
+        start += amount
     return start, end, moving
 
 
-def retreat(start, end, resizing):
+def retreat(start, end, resizing, amount):
     """Move up or left.
     
     >>> retreat(1, 2, True)
@@ -234,14 +238,33 @@ def retreat(start, end, resizing):
     :type end: int
     :param resizing: flag if the selection is currently being resized
     :type resizing: bool
+    :param amount: number of columns or rows to retreat
+    :type amount: int
     """
+    #TODO: Implement tests for amount
     moving = False
-    if not resizing and start - 1 >= 0:
-        start -= 1
-        end -= 1
-    elif resizing and end > start:
-        end -= 1
+    max_amount = end - start if resizing else start
+    amount = min(amount, max_amount)
+    end -= amount
+    if not resizing:
+        start -= amount
     return start, end, moving
+
+
+def number_in(keystroke_history):
+    """Returns number previous keystrokes have a number."""
+    number = ''
+    keystroke_history.reverse() # most recent keystroke first
+    for keystroke in keystroke_history:
+        if keystroke.isdigit():
+            number = keystroke + number
+        else:
+            break
+    keystroke_history.clear()
+    if not number:
+        return 1
+    else:
+        return int(number)
 
 
 def run(stdscr, df):
@@ -257,6 +280,8 @@ def run(stdscr, df):
     origin_y, origin_x = 0, 0
     moving_down, moving_right = True, True
     resizing = False
+    max_history = 10
+    keystroke_history = deque([], max_history)
 
     while True:
         origin_x = origin(origin_x, left, right, widths, unfrozen_x, moving_right)
@@ -273,13 +298,17 @@ def run(stdscr, df):
             right = left
             bottom = top
         if keypress in [ord('l'), curses.KEY_RIGHT]:
-            left, right, moving_right = advance(left, right, resizing, cols)
+            amount = number_in(keystroke_history)
+            left, right, moving_right = advance(left, right, resizing, cols, amount)
         if keypress in [ord('j'), curses.KEY_DOWN]:
-            top, bottom, moving_down = advance(top, bottom, resizing, rows)
+            amount = number_in(keystroke_history)
+            top, bottom, moving_down = advance(top, bottom, resizing, rows, amount)
         if keypress in [ord('h'), curses.KEY_LEFT]:
-            left, right, moving_right = retreat(left, right, resizing)
+            amount = number_in(keystroke_history)
+            left, right, moving_right = retreat(left, right, resizing, amount)
         if keypress in [ord('k'), curses.KEY_UP]:
-            top, bottom, moving_down = retreat(top, bottom, resizing)
+            amount = number_in(keystroke_history)
+            top, bottom, moving_down = retreat(top, bottom, resizing, amount)
         if keypress in [ord('.')]:
             moving_right = True
             for col in range(left, right+1):
@@ -295,6 +324,11 @@ def run(stdscr, df):
             toggle = {0 : 8, 8 : 0}
             frozen_x = toggle[frozen_x]
             unfrozen_x = screen_x - frozen_x
+        # Store keystroke in history
+        try:
+            keystroke_history.append(chr(keypress))
+        except ValueError:
+            pass
 
 
 if __name__ == '__main__':
