@@ -253,7 +253,22 @@ def retreat(start, end, resizing, amount):
 
 
 def number_in(keystroke_history):
-    """Returns number previous keystrokes have a number."""
+    """Returns number previous keystrokes have a number.
+
+    >>> number_in(deque(['s', 'p', 'a', 'm']))
+    1
+    >>> number_in(deque(['8', 's', 'p', 'a', 'm']))
+    1
+    >>> number_in(deque(['8', 's', 'p', 'a', 'm', '9']))
+    9
+    >>> number_in(deque(['8', 's', 'p', 'a', 'm', '9', '0']))
+    90
+
+    :param keystroke_history: contains the last few keystrokes
+    :type keystroke_history: collections.deque
+    :returns: number inferred from keystroke history
+    :rtype: int
+    """
     number = ''
     keystroke_history.reverse() # most recent keystroke first
     for keystroke in keystroke_history:
