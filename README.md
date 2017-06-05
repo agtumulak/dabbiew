@@ -18,6 +18,10 @@ dabbiew file.csv
 ```
 
 ## Key Bindings
+A move command can be repeated by typing the number of times to repeat before 
+issuing an action. For example, to move down 12 times, simply type `12j` (or 
+`12↓`).
+
 | Key        | Action                   |
 |------------|--------------------------|
 | `q`        | quit                     |
