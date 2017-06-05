@@ -5,6 +5,7 @@ from  __future__ import division, absolute_import, print_function, unicode_liter
 
 import curses
 import locale
+import numpy as np
 import pandas as pd
 from collections import deque
 from sys import argv
@@ -42,17 +43,17 @@ def format_line(text, width):
         return ' ' * width
 
 
-def screen(start, end, extents, offset):
+def screen(start, end, cum_extents, offset):
     """Generate column widths or row heights from screen start to end positions.
 
     Indexing for start and end is analogous to python ranges. Start is first 
     screen position that gets drawn. End does not get drawn. Returned tuples 
     correspond to elements that are inside screen box.
 
-    >>> args = (5, 10, [3, 3, 3, 3, 3], 0)
+    >>> args = (5, 10, [0, 3, 6, 9, 12, 15], 0)
     >>> [(col, width, cursor) for col, width, cursor in screen(*args)]
     [(1, 1, 0), (2, 3, 1), (3, 1, 4)]
-    >>> args = (5, 10, [3, 3, 3, 3, 3], 2)
+    >>> args = (5, 10, [0, 3, 6, 9, 12, 15], 2)
     >>> [(col, width, cursor) for col, width, cursor in screen(*args)]
     [(1, 1, 2), (2, 3, 3), (3, 1, 6)]
 
@@ -60,29 +61,29 @@ def screen(start, end, extents, offset):
     :type start: int
     :param end: screen position end
     :type end: int
-    :param extents: column widths or row heights
-    :type extents: list
+    :param cum_extents: cumulative sum of column widths or row heights
+    :type cum_extents: numpy.ndarray
     :param offset: shifts cursor position returned by fixed amount
     :type offset: int
     :returns: index of element, extent of element, position of element on screen
     :rtype: int, int, int
     """
-    accumulated = 0
-    for ind, extent in enumerate(extents):
-        accumulated += extent
-        if accumulated > start:
-            break
-    yield ind, accumulated - start, offset
-    for ind, extent in enumerate(extents[ind+1:], start=ind+1):
-        if accumulated + extent >= end:
-            yield ind, end - accumulated, offset + accumulated - start
+    cum_extents = cum_extents[1:] # Initial zero useless
+    ind = np.searchsorted(cum_extents, start)
+    yield ind, cum_extents[ind] - start, offset
+    for ind, cum_extent in enumerate(cum_extents[ind+1:], start=ind+1):
+        if cum_extent >= end:
+            yield ind,
+                  end - cum_extents[ind-1],
+                  offset + cum_extents[ind-1] - start
             raise StopIteration
         else:
-            yield ind, extent, offset + accumulated - start
-            accumulated += extent
+            yield ind,
+                  cum_extents[ind] - cum_extents[ind-1],
+                  offset + cum_extents[ind-1] - start
 
 
-def origin(current, start, end, extents, screen, moving):
+def origin(current, start, end, cum_extents, screen, moving):
     """Determine new origin for screen view if necessary.
 
     The part of the DataFrame displayed on screen is conceptually a box which 
@@ -90,11 +91,11 @@ def origin(current, start, end, extents, screen, moving):
     DataFrame. The origin of the relative coordinate system of the box is 
     calculated here.
 
-    >>> origin(0, 0, 0, [4, 4, 4], 7, True)
+    >>> origin(0, 0, 0, [0, 4, 8, 12], 7, True)
     0
-    >>> origin(4, 0, 2, [4, 4, 4], 7, True)
+    >>> origin(4, 0, 2, [0, 4, 8, 12], 7, True)
     5
-    >>> origin(5, 1, 1, [4, 4, 4], 7, False)
+    >>> origin(5, 1, 1, [0, 4, 8, 12], 7, False)
     4
 
     :param current: current origin of a given axis
@@ -103,8 +104,8 @@ def origin(current, start, end, extents, screen, moving):
     :type start: int
     :param end: rightmost column index or bottommost row index selected
     :type end: int
-    :param extents: widths of each column or heights of each row
-    :type extents: list
+    :param cum_extents: cumulative sum of column widths or row heights
+    :type cum_extents: numpy.ndarray
     :param screen: total extent of a given axis
     :type screen: int
     :param moving: flag if current action is advancing
@@ -113,8 +114,8 @@ def origin(current, start, end, extents, screen, moving):
     :rtype: int
     """
     # Convert indices to coordinates of boundaries
-    start = sum(extents[:start])
-    end = sum(extents[:end+1])
+    start = cum_extents[start]
+    end = cum_extents[end+1]
     if end > current + screen and moving:
         return end - screen
     elif start < current and not moving:
@@ -124,7 +125,7 @@ def origin(current, start, end, extents, screen, moving):
 
 
 def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
-         origin_y, origin_x, left, right, top, bottom, widths, heights):
+         origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights):
     """Refresh display with updated view.
 
     Running line profiler shows this is the slowest part. Will optimize later. 
@@ -154,18 +155,18 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     :type top: int
     :param bottom: bottommost row of selection
     :type bottom: int
-    :param widths: horizontal extent of each column
-    :type widths: list
-    :param heights: vertical extent of each row
-    :type heights: list
+    :param cum_widths: cumulative sum of column widths
+    :type cum_widths: numpy.ndarray
+    :param cum_heights: cumulative sum of row heights
+    :type cum_heights: numpy.ndarray
     """
-    for col, width, x_cursor in screen(origin_x, origin_x + unfrozen_x, widths, frozen_x):
+    for col, width, x_cursor in screen(origin_x, origin_x + unfrozen_x, cum_widths, frozen_x):
         # Draw persistent header row
         col_selected = left <= col <= right
         col_attribute = curses.A_REVERSE if col_selected else curses.A_NORMAL
         text = format_line(str(df.columns[col]), width).encode('utf-8')
         stdscr.addstr(0, x_cursor, text, col_attribute)
-        for row, height, y_cursor in screen(origin_y, origin_y + unfrozen_y, heights, frozen_y):
+        for row, height, y_cursor in screen(origin_y, origin_y + unfrozen_y, cum_heights, frozen_y):
             # Draw persistent index column
             row_selected = top <= row <= bottom
             row_attribute = curses.A_REVERSE if row_selected else curses.A_NORMAL
@@ -267,6 +268,50 @@ def number_in(keystroke_history):
         return int(number)
 
 
+def expand_cumsum(start, end, cum_extents, amount):
+    """Increase each extent by a given amount and update cumulative extents.
+
+    >>> expand_cumsum(1, 2, np.array([0, 4, 8, 12, 16, 20]), 2)
+    array([ 0,  4, 10, 16, 20, 24])
+
+    :param start: leftmost column or topmost row of range to expand
+    :type start: int
+    :param end: rightmost column or bottommost row of range to expand
+    :type end: int
+    :param cum_extents: cumulative sum of column widths or row heights
+    :type cum_extents: numpy.ndarray
+    :param amount: amount to increment each row or column in range
+    :type amount: int
+    """
+    extent_increase = np.append(np.array([0]), np.full(cum_extents.size - 1, 0))
+    extent_increase[start+1:end+2] = amount
+    return cum_extents + extent_increase.cumsum()
+
+
+def contract_cumsum(start, end, cum_extents, amount, minimum_extent=2):
+    """Decrease each extent by a given amount and update cumulative extents.
+
+    >>> contract_cumsum(1, 2, np.array([0, 4, 8, 12, 16, 20]), 2)
+    array([ 0,  4,  6,  8, 12, 16])
+    >>> contract_cumsum(1, 2, np.array([0, 3, 6, 9, 12, 15]), 2)
+    array([ 0,  3,  6,  9, 12, 15])
+
+    :param start: leftmost column or topmost row of range to contract
+    :type start: int
+    :param end: rightmost column or bottommost row of range to contract
+    :type end: int
+    :param cum_extents: cumulative sum of column widths or row heights
+    :type cum_extents: numpy.ndarray
+    :param amount: amount to decrement each row or column in range
+    :type amount: int
+    """
+    extents = np.diff(cum_extents[start:end+2])
+    extent_decrease = np.append(np.array([0]), np.full(cum_extents.size - 1, 0))
+    # Only decrase extents if it stays above minimum extent
+    extent_decrease[start+1:end+2][extents - amount >= minimum_extent] = amount
+    return cum_extents - extent_decrease.cumsum()
+
+
 def run(stdscr, df):
     curses.curs_set(0) # invisible cursor
     stdscr.scrollok(False)
@@ -276,7 +321,8 @@ def run(stdscr, df):
     unfrozen_y, unfrozen_x = screen_y - frozen_y, screen_x - frozen_x
     rows, cols = df.shape
     left, right, top, bottom = 0, 0, 0, 0
-    heights, widths = [1] * rows, [8] * cols
+    cum_heights = np.append(np.array([0]), np.full(rows, 1).cumsum())
+    cum_widths = np.append(np.array([0]), np.full(cols, 10).cumsum())
     origin_y, origin_x = 0, 0
     moving_down, moving_right = True, True
     resizing = False
@@ -284,10 +330,10 @@ def run(stdscr, df):
     keystroke_history = deque([], max_history)
 
     while True:
-        origin_x = origin(origin_x, left, right, widths, unfrozen_x, moving_right)
-        origin_y = origin(origin_y, top, bottom, heights, unfrozen_y, moving_down)
+        origin_x = origin(origin_x, left, right, cum_widths, unfrozen_x, moving_right)
+        origin_y = origin(origin_y, top, bottom, cum_heights, unfrozen_y, moving_down)
         draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
-             origin_y, origin_x, left, right, top, bottom, widths, heights)
+             origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights)
         keypress = stdscr.getch()
         if keypress in [ord('q')]:
             break
@@ -311,11 +357,9 @@ def run(stdscr, df):
             top, bottom, moving_down = retreat(top, bottom, resizing, amount)
         if keypress in [ord('.')]:
             moving_right = True
-            for col in range(left, right+1):
-                widths[col] += 1
+            cum_widths = expand_cumsum(left, right, cum_widths, 1)
         if keypress in [ord(',')]:
-            for col in range(left, right+1):
-                widths[col] -= 0 if widths[col] == 2 else 1
+            cum_widths = contract_cumsum(left, right, cum_widths, 1)
         if keypress in [ord('t')]:
             toggle = {0 : 1, 1 : 0}
             frozen_y = toggle[frozen_y]
