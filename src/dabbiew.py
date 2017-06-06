@@ -375,6 +375,11 @@ def run(stdscr, df):
             cum_widths = expand_cumsum(left, right, cum_widths, 1)
         if keypress in [ord(',')]:
             cum_widths = contract_cumsum(left, right, cum_widths, 1)
+        if keypress in [ord('<')]:
+            cum_widths = contract_cumsum(0, cols-1, cum_widths, 1)
+        if keypress in [ord('>')]:
+            moving_right = True
+            cum_widths = expand_cumsum(0, cols-1, cum_widths, 1)
         if keypress in [ord('t')]:
             toggle = {0 : 1, 1 : 0}
             frozen_y = toggle[frozen_y]

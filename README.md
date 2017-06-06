@@ -33,6 +33,8 @@ issuing an action. For example, to move down 12 times, simply type `12j` (or
 | `k` or `↑` | move up                  |
 | `.`        | increase selection width |
 | `,`        | decrease selection width |
+| `>`        | increase all widths      |
+| `<`        | decrease all widths      |
 | `t`        | toggle header            |
 | `y`        | toggle index             |
 
