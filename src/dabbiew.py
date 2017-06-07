@@ -11,6 +11,16 @@ from collections import deque
 from sys import argv
 
 
+def debug(stdscr):
+    """https://stackoverflow.com/a/2949419/5101335"""
+    from ipdb import set_trace
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
+    set_trace()
+
+
 def format_line(text, width):
     """Pad or truncate text to fit width.
 
@@ -352,6 +362,8 @@ def run(stdscr, df):
         keypress = stdscr.getch()
         if keypress in [ord('q')]:
             break
+        if keypress in [ord('d')]:
+            debug(stdscr)
         if keypress in [ord('v')]:
             resizing = not resizing
         if keypress in [ord('\x1b')]: # escape key

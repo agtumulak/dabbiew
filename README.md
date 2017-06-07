@@ -37,6 +37,7 @@ issuing an action. For example, to move down 12 times, simply type `12j` (or
 | `<`        | decrease all widths      |
 | `t`        | toggle header            |
 | `y`        | toggle index             |
+| `d`        | enter ipdb debug mode    |
 
 ## Documentation
 To generate the source code documentation do
