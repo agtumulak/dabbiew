@@ -23,25 +23,18 @@ issuing an action. For example, to move down 12 times, simply type `12j` (or
 `12↓`). To perform a search, open the search bar with `\`, enter a substring to 
 match, and hit return (`↵`).
 
-| Key        | Action                   |
-|------------|--------------------------|
-| `q`        | quit                     |
-| `v`        | toggle selection mode    |
-| `esc`      | cancel selection         |
-| `l` or `→` | move right               |
-| `j` or `↓` | move down                |
-| `h` or `←` | move left                |
-| `k` or `↑` | move up                  |
-| `.`        | increase selection width |
-| `,`        | decrease selection width |
-| `>`        | increase all widths      |
-| `<`        | decrease all widths      |
-| `t`        | toggle header            |
-| `y`        | toggle index             |
-| `/`        | toggle search bar        |
-| `n`        | next match               |
-| `p`        | previous match           |
-| `d`        | enter ipdb debug mode    |
+| Key                              | Action                             |
+|----------------------------------|------------------------------------|
+| `v`                              | toggle selection mode              |
+| `esc`                            | cancel selection                   |
+| `h` `j` `k` `l` `←` `↓`  `↑` `→` | movement keys                      |
+| `,`, `.`                         | decrease, increase selection width |
+| `<`, `>`                         | decrease, increase all widths      |
+| `t`, `y`                         | toggle header, index               |
+| `/`                              | toggle search bar                  |
+| `n`, `p`                         | next, previous match               |
+| `d`                              | enter ipdb debug mode              |
+| `q`                              | quit                               |
 
 ## Documentation
 To generate the source code documentation do
