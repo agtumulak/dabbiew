@@ -250,13 +250,13 @@ def advance(start, end, resizing, boundary, amount):
 def retreat(start, end, resizing, boundary, amount):
     """Move up or left.
     
-    >>> retreat(1, 2, True, 1)
+    >>> retreat(1, 2, True, None, 1)
     (1, 1, False)
-    >>> retreat(1, 1, True, 1)
+    >>> retreat(1, 1, True, None, 1)
     (1, 1, False)
-    >>> retreat(1, 1, False, 1)
+    >>> retreat(1, 1, False, None, 1)
     (0, 0, False)
-    >>> retreat(0, 0, False, 1)
+    >>> retreat(0, 0, False, None, 1)
     (0, 0, False)
 
     :param start: leftmost column or topmost row
