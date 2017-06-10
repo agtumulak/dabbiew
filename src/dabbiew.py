@@ -538,14 +538,14 @@ def run(stdscr, df):
             amount = number_in(keystroke_history)
             top, bottom, moving_down = retreat(top, bottom, resizing, rows, amount)
         if keypress in [ord('.')]:
-            moving_right = True
             cum_widths = expand_cumsum(left, right, cum_widths, 1)
         if keypress in [ord(',')]:
+            moving_right = False
             cum_widths = contract_cumsum(left, right, cum_widths, 1)
         if keypress in [ord('<')]:
+            moving_right = False
             cum_widths = contract_cumsum(0, cols-1, cum_widths, 1)
         if keypress in [ord('>')]:
-            moving_right = True
             cum_widths = expand_cumsum(0, cols-1, cum_widths, 1)
         if keypress in [ord('t')]:
             toggle = {0 : 1, 1 : 0}
