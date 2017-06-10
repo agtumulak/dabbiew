@@ -136,8 +136,8 @@ def origin(current, start, end, cum_extents, screen, moving):
 
 
 def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
-         origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights,
-         moving_right, moving_down, resizing):
+         origin_y, origin_x, left, right, top, bottom, found_row, found_col,
+         cum_widths, cum_heights, moving_right, moving_down, resizing):
     """Refresh display with updated view.
 
     Running line profiler shows this is the slowest part. Will optimize later. 
@@ -167,6 +167,10 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     :type top: int
     :param bottom: bottommost row of selection
     :type bottom: int
+    :param found_row: row containing current search match
+    :type found_row: int
+    :param found_col: column containing current search match
+    :type found_col: int
     :param cum_widths: cumulative sum of column widths
     :type cum_widths: numpy.ndarray
     :param cum_heights: cumulative sum of row heights
@@ -194,7 +198,9 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
             text = format_line(str(df.index[row]), frozen_x).encode('utf-8')
             stdscr.addstr(y_cursor, 0, text, row_attribute)
             # Draw DataFrame contents
-            if row == bottom and col == right and resizing:
+            if row == found_row and col == found_col:
+                attribute = curses.A_UNDERLINE
+            elif row == bottom and col == right and resizing:
                 attribute = curses.A_UNDERLINE
             elif col_selected and row_selected:
                 attribute = curses.A_REVERSE
@@ -500,11 +506,13 @@ def run(stdscr, df):
     max_history = 10
     keystroke_history = deque([], max_history)
     search_string = ''
+    found_row, found_col = None, None
 
     while True:
         origin_y, origin_x = draw(stdscr, df, frozen_y, frozen_x, unfrozen_y,
                                   unfrozen_x, origin_y, origin_x, left, right,
-                                  top, bottom, cum_widths, cum_heights,
+                                  top, bottom, found_row, found_col,
+                                  cum_widths, cum_heights,
                                   moving_right, moving_down, resizing)
         keypress = stdscr.getch()
         if keypress in [ord('q')]:
