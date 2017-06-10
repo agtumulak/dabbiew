@@ -382,7 +382,7 @@ def command_mode(stdscr, screen_y, screen_x):
     return tb.edit(command_validator)
 
 
-def next_matching_index(df, string, row, col):
+def next_match(df, string, row, col):
     """Forward sweep columns then rows for entry containing string match.
 
     :param df: underlying data to present
@@ -417,7 +417,7 @@ def next_matching_index(df, string, row, col):
     return row, col # No match found
 
 
-def prev_matching_index(df, string, row, col):
+def prev_match(df, string, row, col):
     """Reverse sweep columns then rows for entry containing string match.
 
     :param df: underlying data to present
@@ -452,13 +452,9 @@ def prev_matching_index(df, string, row, col):
     return row, col # No match found
 
 
-def search(df, string, left, right, top, bottom, resizing, forward=True):
-    """Move selection to next search match.
+def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
+    """Jump current selection to new position.
 
-    :param df: underlying data to present
-    :type df: pandas.DataFrame
-    :param string: string to match
-    :type string: str
     :param left: leftmost column of selection
     :type left: int
     :param right: rightmost column of selection
@@ -467,21 +463,24 @@ def search(df, string, left, right, top, bottom, resizing, forward=True):
     :type top: int
     :param bottom: bottommost row of selection
     :type bottom: int
+    :param rows: total number of rows
+    :type rows: int
+    :param cols: total number of columns
+    :type cols: int
+    :param to_row: destination row for bottomright selection
+    :type to_row: int
+    :param to_col: destination column for bottomright selection
+    :type to_col: int
     :param resizing: flag if the selection is currently being resized
-    :type resizing: bool
-    :param forward: direction to search for next match
     :type resizing: bool
     :returns: new selection boundaries
     :rtype: int, int, int, int, bool, bool
     """
-    rows, cols = df.shape
-    search = next_matching_index if forward else prev_matching_index
-    found_row, found_col = search(df, string, bottom, right)
-    col_move, row_move = found_col - right, found_row - bottom
-    col_action = advance if col_move >= 0 else retreat
-    row_action = advance if row_move >= 0 else retreat
-    left, right, moving_right = col_action(left, right, resizing, cols, col_move)
-    top, bottom, moving_down = row_action(top, bottom, resizing, rows, row_move)
+    col_distance, row_distance = to_col - right, to_row - bottom
+    col_action = advance if col_distance >= 0 else retreat
+    row_action = advance if row_distance >= 0 else retreat
+    left, right, moving_right = col_action(left, right, resizing, cols, col_distance)
+    top, bottom, moving_down = row_action(top, bottom, resizing, rows, row_distance)
     return left, right, top, bottom, moving_right, moving_down
 
 
@@ -552,17 +551,17 @@ def run(stdscr, df):
             stdscr.addstr(screen_y, 0, '/')
             stdscr.refresh()
             search_string = command_mode(stdscr, screen_y, screen_x - 1).strip()
-            left, right, top, bottom, moving_right, moving_down = search(
-                    df, search_string, left, right, top, bottom, resizing)
+            found_row, found_col = next_match(df, search_string, bottom, right)
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         if keypress in [ord('n')]:
-            left, right, top, bottom, moving_right, moving_down = search(
-                    df, search_string, left, right, top, bottom,
-                    resizing, forward=True)
+            found_row, found_col = next_match(df, search_string, bottom, right)
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         if keypress in [ord('p')]:
-            left, right, top, bottom, moving_right, moving_down = search(
-                    df, search_string, left, right, top, bottom,
-                    resizing, forward=False)
-
+            found_row, found_col = prev_match(df, search_string, bottom, right)
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         # Store keystroke in history
         try:
             keystroke_history.append(chr(keypress))
