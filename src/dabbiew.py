@@ -194,8 +194,12 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
             text = format_line(str(df.index[row]), frozen_x).encode('utf-8')
             stdscr.addstr(y_cursor, 0, text, row_attribute)
             # Draw DataFrame contents
-            selected = col_selected and row_selected
-            attribute = curses.A_REVERSE if selected else curses.A_NORMAL
+            if row == bottom and col == right and resizing:
+                attribute = curses.A_UNDERLINE
+            elif col_selected and row_selected:
+                attribute = curses.A_REVERSE
+            else:
+                attribute = curses.A_NORMAL
             text = format_line(str(df.iat[row,col]), width).encode('utf-8')
             stdscr.addstr(y_cursor, x_cursor, text, attribute)
     # Clear right margin if theres unused space on the right
