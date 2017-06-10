@@ -20,7 +20,8 @@ dabbiew file.csv
 ## Key Bindings
 A move command can be repeated by typing the number of times to repeat before 
 issuing an action. For example, to move down 12 times, simply type `12j` (or 
-`12↓`).
+`12↓`). To perform a search, open the search bar with `\`, enter a substring to 
+match, and hit return (`↵`).
 
 | Key        | Action                   |
 |------------|--------------------------|
@@ -37,6 +38,9 @@ issuing an action. For example, to move down 12 times, simply type `12j` (or
 | `<`        | decrease all widths      |
 | `t`        | toggle header            |
 | `y`        | toggle index             |
+| `/`        | toggle search bar        |
+| `n`        | next match               |
+| `p`        | previous match           |
 | `d`        | enter ipdb debug mode    |
 
 ## Documentation

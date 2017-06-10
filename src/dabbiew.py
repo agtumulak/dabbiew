@@ -4,6 +4,7 @@
 from  __future__ import division, absolute_import, print_function, unicode_literals
 
 import curses
+import curses.textpad
 import locale
 import numpy as np
 import pandas as pd
@@ -135,7 +136,8 @@ def origin(current, start, end, cum_extents, screen, moving):
 
 
 def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
-         origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights):
+         origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights,
+         moving_right, moving_down, resizing):
     """Refresh display with updated view.
 
     Running line profiler shows this is the slowest part. Will optimize later. 
@@ -169,7 +171,16 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     :type cum_widths: numpy.ndarray
     :param cum_heights: cumulative sum of row heights
     :type cum_heights: numpy.ndarray
+    :param moving_right: flag if current action is moving right
+    :type moving_right: bool
+    :param moving_down: flag if current action is moving down
+    :type moving_down: bool
+    :param resizing: flag if the selection is currently being resized
+    :type resizing: bool
     """
+    curses.curs_set(0) # invisible cursor
+    origin_x = origin(origin_x, left, right, cum_widths, unfrozen_x, moving_right)
+    origin_y = origin(origin_y, top, bottom, cum_heights, unfrozen_y, moving_down)
     for col, width, x_cursor in screen(origin_x, origin_x + unfrozen_x, cum_widths, frozen_x):
         # Draw persistent header row
         col_selected = left <= col <= right
@@ -197,6 +208,7 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
         for y_cursor in range(frozen_y):
             stdscr.addstr(y_cursor, x_cursor, ' ', curses.A_NORMAL)
     stdscr.refresh()
+    return origin_y, origin_x
 
 
 def advance(start, end, resizing, boundary, amount):
@@ -231,7 +243,7 @@ def advance(start, end, resizing, boundary, amount):
     return start, end, moving
 
 
-def retreat(start, end, resizing, amount):
+def retreat(start, end, resizing, boundary, amount):
     """Move up or left.
     
     >>> retreat(1, 2, True, 1)
@@ -249,11 +261,14 @@ def retreat(start, end, resizing, amount):
     :type end: int
     :param resizing: flag if the selection is currently being resized
     :type resizing: bool
+    :param boundary: total number of columns or rows (unused in retreat)
+    :type boundary: int
     :param amount: number of columns or rows to retreat
     :type amount: int
     """
     #TODO: Implement tests for amount
     moving = False
+    amount = amount if amount >= 0 else -amount
     max_amount = end - start if resizing else start
     amount = min(amount, max_amount)
     end -= amount
@@ -337,8 +352,136 @@ def contract_cumsum(start, end, cum_extents, amount, minimum_extent=2):
     return cum_extents - extent_decrease.cumsum()
 
 
+def command_validator(keystroke):
+    """Modify behavior of backspace key."""
+    if keystroke == 127:
+        return 8
+    else:
+        return keystroke
+
+
+def command_mode(stdscr, screen_y, screen_x):
+    """Display a prompt for a command on the bottom of the screen.
+
+    :param stdscr: window object to update
+    :type stdscr: curses.window
+    :param screen_y: y position on screen to draw
+    :type screen_y: int
+    :param screen_x: x width of prompt
+    :type screen_x: int
+    :returns: string read from prompt
+    :rtype: str
+    """
+    curses.curs_set(1) # visible cursor
+    window = curses.newwin(1, screen_x, screen_y, 1)
+    tb = curses.textpad.Textbox(window, insert_mode=True)
+    return tb.edit(command_validator)
+
+
+def next_matching_index(df, string, row, col):
+    """Forward sweep columns then rows for entry containing string match.
+
+    :param df: underlying data to present
+    :type df: pandas.DataFrame
+    :param string: string to match
+    :type string: str
+    :param row: search starting row
+    :type row: int
+    :param col: search starting col
+    :type col: int
+    :returns: next matching row and column
+    :rtype: int, int
+    """
+    rows, cols = df.shape
+    if col == cols - 1:
+        if row == rows - 1:
+            search_row = 0
+            search_col = 0
+        else:
+            search_row = row + 1
+            search_col = 0
+    else:
+        search_row = row
+        search_col = col + 1
+    while search_row != row or search_col != col:
+        while search_col < cols:
+            if string.lower() in str(df.iat[search_row, search_col]).lower():
+                return search_row, search_col
+            search_col += 1
+        search_col = 0
+        search_row = search_row + 1 if search_row + 1 < rows else 0
+    return row, col # No match found
+
+
+def prev_matching_index(df, string, row, col):
+    """Reverse sweep columns then rows for entry containing string match.
+
+    :param df: underlying data to present
+    :type df: pandas.DataFrame
+    :param string: string to match
+    :type string: str
+    :param row: search starting row
+    :type row: int
+    :param col: search starting col
+    :type col: int
+    :returns: previous matching row and column
+    :rtype: int, int
+    """
+    rows, cols = df.shape
+    if col == 0:
+        if row == 0:
+            search_row = rows - 1
+            search_col = cols - 1
+        else:
+            search_row = rows - 1
+            search_col = cols - 1
+    else:
+        search_row = row
+        search_col = col - 1
+    while search_row != row or search_col != col:
+        while search_col >= 0:
+            if string.lower() in str(df.iat[search_row, search_col]).lower():
+                return search_row, search_col
+            search_col -= 1
+        search_col = cols - 1
+        search_row = search_row - 1 if search_row - 1 >= 0 else rows - 1
+    return row, col # No match found
+
+
+def search(df, string, left, right, top, bottom, resizing, forward=True):
+    """Move selection to next search match.
+
+    :param df: underlying data to present
+    :type df: pandas.DataFrame
+    :param string: string to match
+    :type string: str
+    :param left: leftmost column of selection
+    :type left: int
+    :param right: rightmost column of selection
+    :type left: int
+    :param top: topmost row of selection
+    :type top: int
+    :param bottom: bottommost row of selection
+    :type bottom: int
+    :param resizing: flag if the selection is currently being resized
+    :type resizing: bool
+    :param forward: direction to search for next match
+    :type resizing: bool
+    :returns: new selection boundaries
+    :rtype: int, int, int, int, bool, bool
+    """
+    rows, cols = df.shape
+    search = next_matching_index if forward else prev_matching_index
+    found_row, found_col = search(df, string, bottom, right)
+    col_move, row_move = found_col - right, found_row - bottom
+    col_action = advance if col_move >= 0 else retreat
+    row_action = advance if row_move >= 0 else retreat
+    left, right, moving_right = col_action(left, right, resizing, cols, col_move)
+    top, bottom, moving_down = row_action(top, bottom, resizing, rows, row_move)
+    return left, right, top, bottom, moving_right, moving_down
+
+
 def run(stdscr, df):
-    curses.curs_set(0) # invisible cursor
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
     screen_y -= 1 # Avoid writing to last line
@@ -353,12 +496,13 @@ def run(stdscr, df):
     resizing = False
     max_history = 10
     keystroke_history = deque([], max_history)
+    search_string = ''
 
     while True:
-        origin_x = origin(origin_x, left, right, cum_widths, unfrozen_x, moving_right)
-        origin_y = origin(origin_y, top, bottom, cum_heights, unfrozen_y, moving_down)
-        draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
-             origin_y, origin_x, left, right, top, bottom, cum_widths, cum_heights)
+        origin_y, origin_x = draw(stdscr, df, frozen_y, frozen_x, unfrozen_y,
+                                  unfrozen_x, origin_y, origin_x, left, right,
+                                  top, bottom, cum_widths, cum_heights,
+                                  moving_right, moving_down, resizing)
         keypress = stdscr.getch()
         if keypress in [ord('q')]:
             break
@@ -378,10 +522,10 @@ def run(stdscr, df):
             top, bottom, moving_down = advance(top, bottom, resizing, rows, amount)
         if keypress in [ord('h'), curses.KEY_LEFT]:
             amount = number_in(keystroke_history)
-            left, right, moving_right = retreat(left, right, resizing, amount)
+            left, right, moving_right = retreat(left, right, resizing, cols, amount)
         if keypress in [ord('k'), curses.KEY_UP]:
             amount = number_in(keystroke_history)
-            top, bottom, moving_down = retreat(top, bottom, resizing, amount)
+            top, bottom, moving_down = retreat(top, bottom, resizing, rows, amount)
         if keypress in [ord('.')]:
             moving_right = True
             cum_widths = expand_cumsum(left, right, cum_widths, 1)
@@ -400,6 +544,21 @@ def run(stdscr, df):
             toggle = {0 : 8, 8 : 0}
             frozen_x = toggle[frozen_x]
             unfrozen_x = screen_x - frozen_x
+        if keypress in [ord('/')]:
+            stdscr.addstr(screen_y, 0, '/')
+            stdscr.refresh()
+            search_string = command_mode(stdscr, screen_y, screen_x - 1).strip()
+            left, right, top, bottom, moving_right, moving_down = search(
+                    df, search_string, left, right, top, bottom, resizing)
+        if keypress in [ord('n')]:
+            left, right, top, bottom, moving_right, moving_down = search(
+                    df, search_string, left, right, top, bottom,
+                    resizing, forward=True)
+        if keypress in [ord('p')]:
+            left, right, top, bottom, moving_right, moving_down = search(
+                    df, search_string, left, right, top, bottom,
+                    resizing, forward=False)
+
         # Store keystroke in history
         try:
             keystroke_history.append(chr(keypress))
