@@ -28,6 +28,7 @@ match, and hit return (`↵`).
 | `v`                              | toggle selection mode              |
 | `esc`                            | cancel selection                   |
 | `h` `j` `k` `l` `←` `↓`  `↑` `→` | movement keys                      |
+| `gg`, `GG`                       | jump to top, bottom of DataFrame   |
 | `,`, `.`                         | decrease, increase selection width |
 | `<`, `>`                         | decrease, increase all widths      |
 | `t`, `y`                         | toggle header, index               |

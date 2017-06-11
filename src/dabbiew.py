@@ -570,6 +570,12 @@ def run(stdscr, df):
             found_row, found_col = prev_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, found_row, found_col, resizing)
+        if keypress in [ord('g')] and keystroke_history[-1] == 'g':
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, 0, right, resizing)
+        if keypress in [ord('G')] and keystroke_history[-1] == 'G':
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, rows - 1, right, resizing)
         # Store keystroke in history
         try:
             keystroke_history.append(chr(keypress))
