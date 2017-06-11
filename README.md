@@ -34,10 +34,19 @@ match, and hit return (`↵`).
 | `<`, `>`                         | decrease, increase all widths      |
 | `t`, `y`                         | toggle header, index               |
 | `[`, `]`                         | decrease, increase index width     |
+| `:`                              | toggle command mode                |
 | `/`                              | toggle search bar                  |
 | `n`, `p`                         | next, previous match               |
 | `d`                              | enter ipdb debug mode              |
 | `q`                              | quit                               |
+
+## Command Mode
+Entering command mode (`:`) allows the user to call *any DataFrame method which
+returns a Series or DataFrame on the current selection*. For instance, the user
+can call `:sum()`, `:where(df==42)`, or even `:where(df==41).sum()` on a
+selection. The resulting Series or DataFrame is rendered on screen. To go back
+to the previous view, simply quit (`q`). Note the name of the current DataFrame
+is always called `df`.
 
 ## Documentation
 To generate the source code documentation do

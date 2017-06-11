@@ -491,6 +491,7 @@ def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
 
 
 def run(stdscr, df):
+    stdscr.clear()
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
     screen_y -= 1 # Avoid writing to last line
@@ -568,6 +569,17 @@ def run(stdscr, df):
             found_row, found_col = next_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, found_row, found_col, resizing)
+        if keypress in [ord(':')]:
+            stdscr.addstr(screen_y, 0, ':')
+            stdscr.refresh()
+            command  = command_mode(stdscr, screen_y, screen_x - 1).strip()
+            try:
+                result = pd.DataFrame(eval('df.iloc[top:bottom+1, left:right+1].' + command))
+                run(stdscr, result)
+            except:
+                stdscr.clrtoeol()
+                stdscr.addstr(screen_y, 0, ':invalid command')
+                stdscr.refresh()
         if keypress in [ord('n')]:
             found_row, found_col = next_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
