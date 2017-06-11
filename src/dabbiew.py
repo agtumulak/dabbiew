@@ -570,12 +570,14 @@ def run(stdscr, df):
             found_row, found_col = prev_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, found_row, found_col, resizing)
-        if keypress in [ord('g')] and keystroke_history[-1] == 'g':
-            left, right, top, bottom, moving_right, moving_down = jump(
-                    left, right, top, bottom, rows, cols, 0, right, resizing)
-        if keypress in [ord('G')] and keystroke_history[-1] == 'G':
-            left, right, top, bottom, moving_right, moving_down = jump(
-                    left, right, top, bottom, rows, cols, rows - 1, right, resizing)
+        if keypress in [ord('g')]:
+            if not keystroke_history and keystroke_history[-1] == 'g':
+                left, right, top, bottom, moving_right, moving_down = jump(
+                        left, right, top, bottom, rows, cols, 0, right, resizing)
+        if keypress in [ord('G')]:
+            if keystroke_history and keystroke_history[-1] == 'G':
+                left, right, top, bottom, moving_right, moving_down = jump(
+                        left, right, top, bottom, rows, cols, rows - 1, right, resizing)
         if keypress in [ord('^')]:
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, bottom, 0, resizing)
