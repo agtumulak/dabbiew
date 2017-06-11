@@ -571,7 +571,7 @@ def run(stdscr, df):
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         if keypress in [ord('g')]:
-            if not keystroke_history and keystroke_history[-1] == 'g':
+            if keystroke_history and keystroke_history[-1] == 'g':
                 left, right, top, bottom, moving_right, moving_down = jump(
                         left, right, top, bottom, rows, cols, 0, right, resizing)
         if keypress in [ord('G')]:
