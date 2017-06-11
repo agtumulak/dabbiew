@@ -33,6 +33,7 @@ match, and hit return (`↵`).
 | `,`, `.`                         | decrease, increase selection width |
 | `<`, `>`                         | decrease, increase all widths      |
 | `t`, `y`                         | toggle header, index               |
+| `[`, `]`                         | decrease, increase index width     |
 | `/`                              | toggle search bar                  |
 | `n`, `p`                         | next, previous match               |
 | `d`                              | enter ipdb debug mode              |

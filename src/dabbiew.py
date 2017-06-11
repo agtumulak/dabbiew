@@ -555,6 +555,12 @@ def run(stdscr, df):
             toggle = {0 : 8, 8 : 0}
             frozen_x = toggle[frozen_x]
             unfrozen_x = screen_x - frozen_x
+        if keypress in [ord('[')]:
+            frozen_x -= 1 if frozen_x > 2 else 0
+            unfrozen_x = screen_x - frozen_x
+        if keypress in [ord(']')]:
+            frozen_x += 1
+            unfrozen_x = screen_x - frozen_x
         if keypress in [ord('/')]:
             stdscr.addstr(screen_y, 0, '/')
             stdscr.refresh()
