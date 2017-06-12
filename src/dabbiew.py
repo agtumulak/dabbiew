@@ -625,6 +625,8 @@ def run(stdscr, df, keystrokes=None):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    df = pd.DataFrame.from_csv(argv[1], index_col=None)
+    filename = argv[1]
+    read = pd.read_excel if filename.endswith(('xls', 'xlsx')) else pd.read_csv
+    df = read(filename, index_col=None)
     keystrokes=None
     curses.wrapper(run, df, keystrokes)
