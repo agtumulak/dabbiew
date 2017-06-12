@@ -12,11 +12,16 @@ structure is a pandas DataFrame instead of a list of lists. This has the
 advantage of potentially being able to take advantage of Dask, which supports 
 "Big Data" collections for distributed environments.
 
+## Installation
+```
+pip install dabbiew
+```
+
 ## Usage
 Open any csv file
 
 ```
-dabbiew file.csv
+dabbiew.py file.csv
 ```
 
 ## Key Bindings
