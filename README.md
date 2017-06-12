@@ -1,6 +1,8 @@
 # DabBiew
 A curses-based DataFrame viewer inspired by TabView.
 
+![Glorious GIF action](/doc/images/dabbiew.gif?raw=true =678x432)
+
 ## About
 This is a side project for now. I work on it because I want more green squares 
 on my GitHub profile.
