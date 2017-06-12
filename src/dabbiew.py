@@ -370,8 +370,11 @@ def command_validator(keystroke):
         return keystroke
 
 
-def command_mode(stdscr, screen_y, screen_x):
+def command_mode(stdscr, screen_y, screen_x, keystrokes=None):
     """Display a prompt for a command on the bottom of the screen.
+
+    >>> command_mode(None, None, None, keystrokes=(ord(k) for k in 'test\\rfoo'))
+    u'test'
 
     :param stdscr: window object to update
     :type stdscr: curses.window
@@ -379,13 +382,23 @@ def command_mode(stdscr, screen_y, screen_x):
     :type screen_y: int
     :param screen_x: x width of prompt
     :type screen_x: int
+    :param keystrokes: optional set of predetermined keystrokes (noninteractive)
+    :type keystrokes: generator
     :returns: string read from prompt
     :rtype: str
     """
-    curses.curs_set(1) # visible cursor
-    window = curses.newwin(1, screen_x, screen_y, 1)
-    tb = curses.textpad.Textbox(window, insert_mode=True)
-    return tb.edit(command_validator)
+    if keystrokes:
+        string = ''
+        keystroke = chr(keystrokes.next())
+        while keystroke != '\r':
+            string += keystroke
+            keystroke = chr(keystrokes.next())
+    else:
+        curses.curs_set(1) # visible cursor
+        window = curses.newwin(1, screen_x, screen_y, 1)
+        tb = curses.textpad.Textbox(window, insert_mode=True)
+        string = tb.edit(command_validator)
+    return string.strip()
 
 
 def next_match(df, string, row, col):
@@ -490,7 +503,7 @@ def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
     return left, right, top, bottom, moving_right, moving_down
 
 
-def run(stdscr, df):
+def run(stdscr, df, keystrokes=None):
     stdscr.clear()
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
@@ -508,6 +521,7 @@ def run(stdscr, df):
     keystroke_history = deque([], max_history)
     search_string = ''
     found_row, found_col = None, None
+    keystroke = stdscr.getch if not keystrokes else keystrokes.next
 
     while True:
         origin_y, origin_x = draw(stdscr, df, frozen_y, frozen_x, unfrozen_y,
@@ -515,7 +529,7 @@ def run(stdscr, df):
                                   top, bottom, found_row, found_col,
                                   cum_widths, cum_heights,
                                   moving_right, moving_down, resizing)
-        keypress = stdscr.getch()
+        keypress = keystroke()
         if keypress in [ord('q')]:
             break
         if keypress in [ord('d')]:
@@ -565,17 +579,17 @@ def run(stdscr, df):
         if keypress in [ord('/')]:
             stdscr.addstr(screen_y, 0, '/')
             stdscr.refresh()
-            search_string = command_mode(stdscr, screen_y, screen_x - 1).strip()
+            search_string = command_mode(stdscr, screen_y, screen_x - 1, keystrokes)
             found_row, found_col = next_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         if keypress in [ord(':')]:
             stdscr.addstr(screen_y, 0, ':')
             stdscr.refresh()
-            command  = command_mode(stdscr, screen_y, screen_x - 1).strip()
+            command = command_mode(stdscr, screen_y, screen_x - 1, keystrokes)
             try:
                 result = pd.DataFrame(eval('df.iloc[top:bottom+1, left:right+1].' + command))
-                run(stdscr, result)
+                run(stdscr, result, keystrokes)
             except:
                 stdscr.clrtoeol()
                 stdscr.addstr(screen_y, 0, ':invalid command')
@@ -612,4 +626,5 @@ def run(stdscr, df):
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
     df = pd.DataFrame.from_csv(argv[1], index_col=None)
-    curses.wrapper(run, df)
+    keystrokes=None
+    curses.wrapper(run, df, keystrokes)
