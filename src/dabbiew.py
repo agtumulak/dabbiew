@@ -364,9 +364,18 @@ def contract_cumsum(start, end, cum_extents, amount, minimum_extent=2):
 
 
 def command_validator(keystroke):
-    """Modify behavior of backspace key."""
+    """Change default keymappings.
+
+    Keybindings from more common `ASCII control codes`_ are remapped to
+    emacs-type keybindings accepted by curses `Textbox objects`_.
+
+    .. _ASCII control codes: https://www.cs.tut.fi/~jkorpela/chars/c0.html
+    .. _Textbox objects: https://docs.python.org/2/library/curses.html#textbox-objects
+    """
     if keystroke == 127:
         return 8
+    elif keystroke == 27:
+        return 7
     else:
         return keystroke
 
