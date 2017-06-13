@@ -370,14 +370,17 @@ def command_validator(keystroke):
         return keystroke
 
 
-def command_mode(stdscr, screen_y, screen_x, keystrokes=None):
+def show_prompt(stdscr, prompt, screen_y, screen_x, keystrokes=None):
     """Display a prompt for a command on the bottom of the screen.
 
-    >>> command_mode(None, None, None, keystrokes=(ord(k) for k in 'test\\rfoo'))
+    >>> keytrokes = (ord(k) for k in 'test\\rspam')
+    >>> curses.wrapper(show_prompt, '>', 0, 0 , keystrokes=keytrokes)
     u'test'
 
     :param stdscr: window object to update
     :type stdscr: curses.window
+    :param prompt: string to display before command prompt
+    :type prompt: str
     :param screen_y: y position on screen to draw
     :type screen_y: int
     :param screen_x: x width of prompt
@@ -387,6 +390,8 @@ def command_mode(stdscr, screen_y, screen_x, keystrokes=None):
     :returns: string read from prompt
     :rtype: str
     """
+    stdscr.addstr(screen_y, 0, prompt)
+    stdscr.refresh()
     if keystrokes:
         string = ''
         keystroke = chr(keystrokes.next())
@@ -395,7 +400,7 @@ def command_mode(stdscr, screen_y, screen_x, keystrokes=None):
             keystroke = chr(keystrokes.next())
     else:
         curses.curs_set(1) # visible cursor
-        window = curses.newwin(1, screen_x, screen_y, 1)
+        window = curses.newwin(1, screen_x, screen_y, len(prompt))
         tb = curses.textpad.Textbox(window, insert_mode=True)
         string = tb.edit(command_validator)
     return string.strip()
@@ -577,31 +582,33 @@ def run(stdscr, df, keystrokes=None):
             frozen_x += 1
             unfrozen_x = screen_x - frozen_x
         if keypress in [ord('/')]:
-            stdscr.addstr(screen_y, 0, '/')
-            stdscr.refresh()
-            search_string = command_mode(stdscr, screen_y, screen_x - 1, keystrokes)
+            search_string = show_prompt(stdscr, chr(keypress), screen_y,
+                    screen_x - 1, keystrokes=keystrokes)
             found_row, found_col = next_match(df, search_string, bottom, right)
             left, right, top, bottom, moving_right, moving_down = jump(
-                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
+                    left, right, top, bottom, rows, cols, found_row, found_col,
+                    resizing)
+        if keypress in [ord('n')]:
+            found_row, found_col = next_match(df, search_string, bottom, right)
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, found_row, found_col,
+                    resizing)
+        if keypress in [ord('p')]:
+            found_row, found_col = prev_match(df, search_string, bottom, right)
+            left, right, top, bottom, moving_right, moving_down = jump(
+                    left, right, top, bottom, rows, cols, found_row, found_col,
+                    resizing)
         if keypress in [ord(':')]:
-            stdscr.addstr(screen_y, 0, ':')
-            stdscr.refresh()
-            command = command_mode(stdscr, screen_y, screen_x - 1, keystrokes)
+            command = show_prompt(stdscr, chr(keypress), screen_y,
+                    screen_x - 1, keystrokes=keystrokes)
             try:
-                result = pd.DataFrame(eval('df.iloc[top:bottom+1, left:right+1].' + command))
+                result = pd.DataFrame(
+                        eval('df.iloc[top:bottom+1, left:right+1].' + command))
                 run(stdscr, result, keystrokes)
             except:
                 stdscr.clrtoeol()
                 stdscr.addstr(screen_y, 0, ':invalid command')
                 stdscr.refresh()
-        if keypress in [ord('n')]:
-            found_row, found_col = next_match(df, search_string, bottom, right)
-            left, right, top, bottom, moving_right, moving_down = jump(
-                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
-        if keypress in [ord('p')]:
-            found_row, found_col = prev_match(df, search_string, bottom, right)
-            left, right, top, bottom, moving_right, moving_down = jump(
-                    left, right, top, bottom, rows, cols, found_row, found_col, resizing)
         if keypress in [ord('g')]:
             if keystroke_history and keystroke_history[-1] == 'g':
                 left, right, top, bottom, moving_right, moving_down = jump(
