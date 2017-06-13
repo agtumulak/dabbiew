@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from collections import deque
 from sys import argv
+from time import sleep
 
 
 def debug(stdscr):
@@ -370,37 +371,44 @@ def command_validator(keystroke):
         return keystroke
 
 
-def show_prompt(stdscr, prompt, screen_y, screen_x, keystrokes=None):
+def show_prompt(stdscr, prompt, row, width, keystrokes=None, delay=0.0):
     """Display a prompt for a command on the bottom of the screen.
 
-    >>> keytrokes = (ord(k) for k in 'test\\rspam')
-    >>> curses.wrapper(show_prompt, '>', 0, 0 , keystrokes=keytrokes)
-    u'test'
+    >>> keytrokes = (ord(k) for k in 'spam\\rham')
+    >>> curses.wrapper(show_prompt, '>', 0, 10, keystrokes=keytrokes, delay=0.1)
+    u'spam'
 
     :param stdscr: window object to update
     :type stdscr: curses.window
     :param prompt: string to display before command prompt
     :type prompt: str
-    :param screen_y: y position on screen to draw
-    :type screen_y: int
-    :param screen_x: x width of prompt
-    :type screen_x: int
+    :param row: y position on screen to draw
+    :type row: int
+    :param width: x width of prompt input field
+    :type width: int
     :param keystrokes: optional set of predetermined keystrokes (noninteractive)
     :type keystrokes: generator
+    :param delay: time to wait after each keystroke is rendered
+    :type delay: float
     :returns: string read from prompt
     :rtype: str
     """
-    stdscr.addstr(screen_y, 0, prompt)
+    stdscr.addstr(row, 0, prompt)
     stdscr.refresh()
+    curses.curs_set(1) # visible cursor
+    window = curses.newwin(1, width, row, len(prompt))
     if keystrokes:
         string = ''
-        keystroke = chr(keystrokes.next())
-        while keystroke != '\r':
-            string += keystroke
-            keystroke = chr(keystrokes.next())
+        for i, keystroke in enumerate(keystrokes):
+            keystroke = chr(keystroke)
+            if keystroke == '\r':
+                break
+            else:
+                string += keystroke
+                window.addstr(0, i, keystroke)
+                window.refresh()
+                sleep(delay)
     else:
-        curses.curs_set(1) # visible cursor
-        window = curses.newwin(1, screen_x, screen_y, len(prompt))
         tb = curses.textpad.Textbox(window, insert_mode=True)
         string = tb.edit(command_validator)
     return string.strip()
