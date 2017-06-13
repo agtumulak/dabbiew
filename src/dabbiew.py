@@ -623,10 +623,18 @@ def run(stdscr, df, keystrokes=None):
             pass
 
 
+def to_dataframe(filepath):
+    """Infer file type and load as DataFrame.
+
+    :param filepath: path to file containing data
+    :type filepath: str
+    :returns: loaded DataFrame
+    :rtype: pandas.DataFrame
+    """
+    read = pd.read_excel if filepath.endswith(('xls', 'xlsx')) else pd.read_csv
+    return read(filepath, index_col=None)
+
+
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    filename = argv[1]
-    read = pd.read_excel if filename.endswith(('xls', 'xlsx')) else pd.read_csv
-    df = read(filename, index_col=None)
-    keystrokes=None
-    curses.wrapper(run, df, keystrokes)
+    curses.wrapper(run, to_dataframe(argv[1]))
