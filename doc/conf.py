@@ -53,9 +53,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'DabBiew'
+project = u'dabbiew'
 copyright = u'2017, Aaron Tumulak'
-author = u'Aaron Tumulak'
+author = u'Aaron G. Tumulak'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
