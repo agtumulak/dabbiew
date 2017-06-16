@@ -28,6 +28,7 @@ setup(
   packages=['dabbiew'],
   scripts=['bin/dabbiew'],
   install_requires=[
+      'ipdb',
       'numpy',
       'pandas',
       'xlrd'
