@@ -29,7 +29,7 @@ Installation
 *****
 Usage
 *****
-Open any csv file::
+Open any csv or Excel file::
 
   dabbiew file.csv
   dabbiew file.xlsx
