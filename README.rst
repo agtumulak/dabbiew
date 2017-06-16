@@ -31,7 +31,8 @@ Usage
 *****
 Open any csv file::
 
-  dabbiew.py file.csv
+  dabbiew file.csv
+  dabbiew file.xlsx
 
 ************
 Key Bindings
