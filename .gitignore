@@ -1,4 +1,7 @@
 RELEASE-VERSION
+setup.cfg
+dabbiew.egg-info/
+dist/
 *.lprof
 *.pyc
 *.swp
