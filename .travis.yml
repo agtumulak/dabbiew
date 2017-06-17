@@ -8,3 +8,5 @@ script:
   - py.test --doctest-modules --ignore setup.py --cov dabbiew
 after_success:
   - coveralls
+cache:
+  - pip
