@@ -1,6 +1,9 @@
 #######
 dabbiew
 #######
+.. image:: https://travis-ci.org/agtumulak/dabbiew.svg?branch=master
+    :target: https://travis-ci.org/agtumulak/dabbiew
+
 A curses-based DataFrame viewer inspired by TabView
 
 .. image:: doc/images/dabbiew.gif
