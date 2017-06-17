@@ -4,6 +4,10 @@ dabbiew
 .. image:: https://travis-ci.org/agtumulak/dabbiew.svg?branch=master
     :target: https://travis-ci.org/agtumulak/dabbiew
 
+.. image:: https://readthedocs.org/projects/dabbiew/badge/?version=latest
+    :target: http://dabbiew.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 A curses-based DataFrame viewer inspired by TabView
 
 .. image:: doc/images/dabbiew.gif
