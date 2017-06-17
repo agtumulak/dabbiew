@@ -31,6 +31,7 @@ setup(
       'ipdb',
       'numpy',
       'pandas',
+      'sphinx_rtd_theme',
       'xlrd'
   ]
  )
