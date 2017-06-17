@@ -383,8 +383,8 @@ def command_validator(keystroke):
 def show_prompt(stdscr, prompt, row, width, keystrokes=None, delay=0.0):
     """Display a prompt for a command on the bottom of the screen.
 
-    >>> keytrokes = (ord(k) for k in 'spam\\rham')
-    >>> curses.wrapper(show_prompt, '>', 0, 10, keystrokes=keytrokes, delay=0.1)
+    >>> show_prompt(curses.initscr(), '>', 0, 10, delay=0.1,
+    ...             keystrokes=(ord(k) for k in 'spam\\rham'))
     u'spam'
 
     :param stdscr: window object to update
