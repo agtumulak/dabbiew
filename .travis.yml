@@ -4,4 +4,4 @@ python:
 before-install:
   - pip install pytest pytest-cov
 script:
-  - py.test
+  - py.test --doctest-modules --ignore setup.py
