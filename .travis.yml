@@ -3,5 +3,8 @@ python:
   - '2.7'
 before-install:
   - pip install pytest pytest-cov
+  - pip install coveralls
 script:
   - py.test --doctest-modules --ignore setup.py
+after_success:
+  - coveralls
