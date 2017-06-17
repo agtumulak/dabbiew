@@ -1,7 +1,7 @@
 DabBiew module reference
 ===================================
 
-.. automodule:: src.dabbiew
+.. automodule:: dabbiew.dabbiew
    :members:
 
 Indices and tables
