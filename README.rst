@@ -76,10 +76,12 @@ Command Mode
 ************
 Entering command mode (``:``) allows the user to call *any DataFrame method
 which returns a Series or DataFrame* on the current selection. For instance, the
-user can call ``:sum()``, ``:where(df==42)``, or even ``:where(df==41).sum()``
-on a selection. The resulting Series or DataFrame is rendered on screen. To go
-back to the previous view, simply quit (``q``). Note the name of the current
-DataFrame is always called ``df``.
+user can call ``:sum()``, ``:where(df==42)``, or even ``:where(df==42).sum()``
+on a selection. The resulting Series or DataFrame is rendered in a nested
+instance. To go back to the previous DataFrame, simply quit (``q``) the current
+instance. If the selection is just a single cell, the call is made to the entire
+DataFrame inplace. Note the name of the current DataFrame is always called
+``df``.
 
 *************
 Documentation

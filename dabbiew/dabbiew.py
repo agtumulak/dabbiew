@@ -574,12 +574,54 @@ def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
     return left, right, top, bottom, moving_right, moving_down
 
 
+def eval_command(stdscr, df, command, row, left, right, top, bottom, keystrokes):
+    """Call method on DataFrame selection.
+
+    If the selection is just a single cell, the call is made to the entire
+    DataFrame inplace. If the selection is more than one cell, then this
+    function creates a new DataFrame and makes a nested call to the main
+    function run().
+
+    :param stdscr: window object to update
+    :type stdscr: curses.window
+    :param df: underlying data to present
+    :type df: pandas.DataFrame
+    :param command: DataFrame method to call
+    :type command: str
+    :param row: y position on screen to draw input box
+    :type row: int
+    :param left: leftmost column of selection
+    :type left: int
+    :param right: rightmost column of selection
+    :type left: int
+    :param top: topmost row of selection
+    :type top: int
+    :param bottom: bottommost row of selection
+    :type bottom: int
+    :param keystrokes: keystrokes to use in autopilot.
+    :type keystrokes: generator yielding int
+    """
+    try:
+        single = left == right and top == bottom
+        result = pd.DataFrame(eval('df{selection}.{command}'.format(\
+                selection='' if single else '.iloc[top:bottom+1, left:right+1]',
+                command=command)))
+        if single:
+            return result
+        else:
+            run(stdscr, result, keystrokes)
+    except Exception as e:
+        stdscr.clrtoeol()
+        stdscr.addstr(row, 0, ':invalid command: {}'.format(e.message))
+        stdscr.refresh()
+
+
 def run(stdscr, df, keystrokes=None):
     """Main loop; set state of window and wait for keystrokes.
 
     >>> run(curses.initscr(),
     ...     pd.DataFrame([['a' ,'b', 'c'], [1, 2, 3], [4.0, 5.0, 6.0]]),
-    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\rq')) is None
+    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\r\x1b:sort_values(1)\\rq')) is None
     True
 
     :param stdscr: window object to update
@@ -681,14 +723,10 @@ def run(stdscr, df, keystrokes=None):
         if keypress in [ord(':')]:
             command = show_prompt(stdscr, chr(keypress), screen_y,
                     screen_x - 1, keystrokes=keystrokes)
-            try:
-                result = pd.DataFrame(
-                        eval('df.iloc[top:bottom+1, left:right+1].' + command))
-                run(stdscr, result, keystrokes)
-            except:
-                stdscr.clrtoeol()
-                stdscr.addstr(screen_y, 0, ':invalid command')
-                stdscr.refresh()
+            new_df = eval_command(stdscr, df, command, screen_y, left, right,
+                                  top, bottom, keystrokes)
+            if new_df is not None:
+                df = new_df
         if keypress in [ord('g')]:
             if keystroke_history and keystroke_history[-1] == 'g':
                 left, right, top, bottom, moving_right, moving_down = jump(
