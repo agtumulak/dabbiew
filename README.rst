@@ -58,6 +58,7 @@ Key                                               Action
 ``v``                                             toggle selection mode
 ``esc``                                           cancel selection
 ``h`` ``j`` ``k`` ``l`` ``←`` ``↓``  ``↑`` ``→``  movement keys
+``s``, ``S``                                      sort ascending, descending
 ``gg``, ``GG``                                    jump to top, bottom of DataFrame
 ``^``, ``$``                                      jump to left, right of DataFrame
 ``,``, ``.``                                      decrease, increase selection width

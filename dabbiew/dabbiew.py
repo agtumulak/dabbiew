@@ -621,7 +621,7 @@ def run(stdscr, df, keystrokes=None):
 
     >>> run(curses.initscr(),
     ...     pd.DataFrame([['a' ,'b', 'c'], [1, 2, 3], [4.0, 5.0, 6.0]]),
-    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\r\x1b:sort_values(1)\\rq')) is None
+    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\r\x1b:sort_values(1)\\rsSq')) is None
     True
 
     :param stdscr: window object to update
@@ -741,6 +741,10 @@ def run(stdscr, df, keystrokes=None):
         if keypress in [ord('$')]:
             left, right, top, bottom, moving_right, moving_down = jump(
                     left, right, top, bottom, rows, cols, bottom, cols - 1, resizing)
+        if keypress in [ord('s')]:
+            df = df.sort_values(df.columns[right], ascending=True, kind='mergesort')
+        if keypress in [ord('S')]:
+            df = df.sort_values(df.columns[right], ascending=False, kind='mergesort')
         # Store keystroke in history
         try:
             keystroke_history.append(chr(keypress))
