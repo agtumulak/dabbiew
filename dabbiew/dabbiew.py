@@ -483,14 +483,15 @@ def next_match(df, string, row, col):
     else:
         search_row = row
         search_col = col + 1
-    while search_row != row or search_col != col:
+    while True:
         while search_col < cols:
             if string.lower() in str(df.iat[search_row, search_col]).lower():
                 return search_row, search_col
+            elif search_row == row and search_col == col:
+                return None
             search_col += 1
         search_col = 0
         search_row = search_row + 1 if search_row + 1 < rows else 0
-    return row, col # No match found
 
 
 def prev_match(df, string, row, col):
@@ -527,14 +528,15 @@ def prev_match(df, string, row, col):
     else:
         search_row = row
         search_col = col - 1
-    while search_row != row or search_col != col:
+    while True:
         while search_col >= 0:
             if string.lower() in str(df.iat[search_row, search_col]).lower():
                 return search_row, search_col
+            elif search_row == row and search_col == col:
+                return None
             search_col -= 1
         search_col = cols - 1
         search_row = search_row - 1 if search_row - 1 >= 0 else rows - 1
-    return row, col # No match found
 
 
 def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
