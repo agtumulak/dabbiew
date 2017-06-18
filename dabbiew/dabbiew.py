@@ -679,6 +679,12 @@ def run(stdscr, df, keystrokes=None):
         if keypress in [ord('k'), curses.KEY_UP]:
             amount = number_in(keystroke_history)
             top, bottom, moving_down = retreat(top, bottom, resizing, rows, amount)
+        if keypress in [ord('\x06')]: # control-f
+            amount = screen_y
+            top, bottom, moving_down = advance(top, bottom, resizing, rows, amount)
+        if keypress in [ord('\x02')]: # control-b
+            amount = screen_y
+            top, bottom, moving_down = retreat(top, bottom, resizing, rows, amount)
         if keypress in [ord('.')]:
             cum_widths = expand_cumsum(left, right, cum_widths, 1)
         if keypress in [ord(',')]:
