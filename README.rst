@@ -4,6 +4,9 @@ dabbiew
 .. image:: https://travis-ci.org/agtumulak/dabbiew.svg?branch=master
     :target: https://travis-ci.org/agtumulak/dabbiew
 
+.. image:: https://coveralls.io/repos/github/agtumulak/dabbiew/badge.svg?branch=master
+    :target: https://coveralls.io/github/agtumulak/dabbiew?branch=master
+
 .. image:: https://readthedocs.org/projects/dabbiew/badge/?version=latest
     :target: http://dabbiew.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
