@@ -621,7 +621,7 @@ def run(stdscr, df, keystrokes=None):
 
     >>> run(curses.initscr(),
     ...     pd.DataFrame([['a' ,'b', 'c'], [1, 2, 3], [4.0, 5.0, 6.0]]),
-    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\r\x1b:sort_values(1)\\rsSq')) is None
+    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\r\x1b:sort_values(1)\\rsSx\x06\x02q')) is None
     True
 
     :param stdscr: window object to update
