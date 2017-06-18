@@ -1,5 +1,6 @@
 RELEASE-VERSION
 setup.cfg
+.cache/
 dabbiew.egg-info/
 dist/
 *.lprof
