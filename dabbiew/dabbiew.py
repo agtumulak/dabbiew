@@ -14,7 +14,13 @@ from time import sleep
 
 
 def debug(stdscr):
-    """https://stackoverflow.com/a/2949419/5101335"""
+    """Undo curses setup and enter ipdb debug mode.
+
+    https://stackoverflow.com/a/2949419/5101335
+
+    :param stdscr: window object to reset
+    :type stdscr: curses.window
+    """
     from ipdb import set_trace
     curses.nocbreak()
     stdscr.keypad(0)
@@ -142,7 +148,15 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
     """Refresh display with updated view.
 
     Running line profiler shows this is the slowest part. Will optimize later. 
-    Also figure out how to test this.
+
+    >>> draw(curses.initscr(),
+    ...      pd.DataFrame([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+    ...      1, 8, 10, 10,
+    ...      0, 0, 0, 1, 0, 1, 0, 1,
+    ...      np.append(np.array([0]), np.full(3, 3).cumsum()),
+    ...      np.append(np.array([0]), np.full(3, 1).cumsum()),
+    ...      False, False, True)
+    (0, 0)
 
     :param stdscr: window object to update
     :type stdscr: curses.window
@@ -370,7 +384,19 @@ def command_validator(keystroke):
     emacs-type keybindings accepted by curses `Textbox objects`_.
 
     .. _ASCII control codes: https://www.cs.tut.fi/~jkorpela/chars/c0.html
-    .. _Textbox objects: https://docs.python.org/2/library/curses.html#textbox-objects
+    .. _Textbox objects: ses.html#textbox-objects
+
+    >>> command_validator(127) # backspace -> control-H
+    8
+    >>> command_validator(27) # escape -> control-G
+    7
+    >>> command_validator(ord('a'))
+    97
+
+    :param keystroke: input read from curses Textbox
+    :type keystroke: int
+    :returns: remapped keystroke
+    :rtype: int
     """
     if keystroke == 127:
         return 8
@@ -426,6 +452,15 @@ def show_prompt(stdscr, prompt, row, width, keystrokes=None, delay=0.0):
 def next_match(df, string, row, col):
     """Forward sweep columns then rows for entry containing string match.
 
+    >>> next_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 0, 0)
+    (1, 1)
+    >>> next_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 0, 2)
+    (1, 1)
+    >>> next_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 1, 2)
+    (1, 1)
+    >>> next_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'g', 1, 2) is None
+    True
+
     :param df: underlying data to present
     :type df: pandas.DataFrame
     :param string: string to match
@@ -460,6 +495,15 @@ def next_match(df, string, row, col):
 
 def prev_match(df, string, row, col):
     """Reverse sweep columns then rows for entry containing string match.
+
+    >>> prev_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 1, 2)
+    (1, 1)
+    >>> prev_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 1, 0)
+    (1, 1)
+    >>> prev_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'e', 0, 0)
+    (1, 1)
+    >>> prev_match(pd.DataFrame([['a', 'b', 'c'], ['d', 'e', 'f']]), 'g', 0, 0) is None
+    True
 
     :param df: underlying data to present
     :type df: pandas.DataFrame
@@ -496,6 +540,9 @@ def prev_match(df, string, row, col):
 def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
     """Jump current selection to new position.
 
+    >>> jump(0, 0, 0, 0, 10, 10, 5, 5, False)
+    (5, 5, 5, 5, True, True)
+
     :param left: leftmost column of selection
     :type left: int
     :param right: rightmost column of selection
@@ -526,6 +573,20 @@ def jump(left, right, top, bottom, rows, cols, to_row, to_col, resizing):
 
 
 def run(stdscr, df, keystrokes=None):
+    """Main loop; set state of window and wait for keystrokes.
+
+    >>> run(curses.initscr(),
+    ...     pd.DataFrame([['a' ,'b', 'c'], [1, 2, 3], [4.0, 5.0, 6.0]]),
+    ...     keystrokes=iter(ord(c) for c in 'vljhk\x1b.,><tyty[]GG$/c\\rnp^ggjvllv:sum()\\rq:fail()\\rq')) is None
+    True
+
+    :param stdscr: window object to update
+    :type stdscr: curses.window
+    :param df: underlying data to present
+    :type df: pandas.DataFrame
+    :param keystrokes: keystrokes to use in autopilot.
+    :type keystrokes: generator yielding int
+    """
     stdscr.clear()
     stdscr.scrollok(False)
     screen_y, screen_x = stdscr.getmaxyx()
