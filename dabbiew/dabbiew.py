@@ -36,29 +36,31 @@ def format_line(text, width):
     truncated and ellipsis (\\\\u2026) is appended.
 
     >>> format_line('lorem ipsum', 16)
-    u'lorem ipsum     '
+    'lorem ipsum     '
     >>> format_line('lorem ipsum', 6)
-    u'lore\\u2026 '
+    'lore\\xe2\\x80\\xa6 '
     >>> format_line('lorem ipsum', 2)
-    u'\\u2026 '
+    '\\xe2\\x80\\xa6 '
     >>> format_line('lorem ipsum', 1)
-    u' '
+    ' '
 
     :param text: contents of cell
-    :type text: str
+    :type text: any type convertible to unicode
     :param width: width of cell
     :type width: int
-    :returns: string formatted to fit in width
+    :returns: encoded unicode string formatted to fit in width
     :rtype: str
     """
+    text = unicode(text)
     if len(text) < width:
-        return text.ljust(width)
+        result = text.ljust(width)
     elif width > 2:
-        return text[:width-2] + '… '
+        result = text[:width-2] + '… '
     elif width == 2:
-        return '… '
+        result = '… '
     else:
-        return ' ' * width
+        result =  ' ' * width
+    return result.encode('utf-8')
 
 
 def screen(start, end, cum_extents, offset):
@@ -204,13 +206,13 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
         # Draw persistent header row
         col_selected = left <= col <= right
         col_attribute = curses.A_REVERSE if col_selected else curses.A_NORMAL
-        text = format_line(str(df.columns[col]), width).encode('utf-8')
+        text = format_line(df.columns[col], width)
         stdscr.addstr(0, x_cursor, text, col_attribute)
         for row, height, y_cursor in screen(origin_y, origin_y + unfrozen_y, cum_heights, frozen_y):
             # Draw persistent index column
             row_selected = top <= row <= bottom
             row_attribute = curses.A_REVERSE if row_selected else curses.A_NORMAL
-            text = format_line(str(df.index[row]), frozen_x).encode('utf-8')
+            text = format_line(df.index[row], frozen_x)
             stdscr.addstr(y_cursor, 0, text, row_attribute)
             # Draw DataFrame contents
             if row == found_row and col == found_col:
@@ -221,7 +223,7 @@ def draw(stdscr, df, frozen_y, frozen_x, unfrozen_y, unfrozen_x,
                 attribute = curses.A_REVERSE
             else:
                 attribute = curses.A_NORMAL
-            text = format_line(str(df.iat[row,col]), width).encode('utf-8')
+            text = format_line(df.iat[row,col], width)
             stdscr.addstr(y_cursor, x_cursor, text, attribute)
     # Clear right margin if theres unused space on the right
     margin = frozen_x + unfrozen_x - (x_cursor + width)
@@ -485,7 +487,7 @@ def next_match(df, string, row, col):
         search_col = col + 1
     while True:
         while search_col < cols:
-            if string.lower() in str(df.iat[search_row, search_col]).lower():
+            if string.lower() in unicode(df.iat[search_row, search_col]).lower():
                 return search_row, search_col
             elif search_row == row and search_col == col:
                 return None
@@ -530,7 +532,7 @@ def prev_match(df, string, row, col):
         search_col = col - 1
     while True:
         while search_col >= 0:
-            if string.lower() in str(df.iat[search_row, search_col]).lower():
+            if string.lower() in unicode(df.iat[search_row, search_col]).lower():
                 return search_row, search_col
             elif search_row == row and search_col == col:
                 return None
@@ -767,7 +769,7 @@ def to_dataframe(filepath):
     :rtype: pandas.DataFrame
     """
     read = pd.read_excel if filepath.endswith(('xls', 'xlsx')) else pd.read_csv
-    return read(filepath, index_col=None)
+    return read(filepath, index_col=None, encoding='utf-8')
 
 
 if __name__ == '__main__':
