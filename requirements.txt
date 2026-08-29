@@ -4,7 +4,7 @@ coverage==4.4.1
 decorator==4.0.11
 enum34==1.1.6
 ipdb==0.10.2
-ipython==7.16.3
+ipython==8.10.0
 ipython-genutils==0.2.0
 numpy==1.22.0
 pandas==0.20.2
@@ -14,8 +14,8 @@ pickleshare==0.7.4
 prompt-toolkit==1.0.14
 ptyprocess==0.5.1
 py==1.10.0
-Pygments==2.7.4
 pytest==9.0.3
+Pygments==2.20.0
 pytest-cov==2.5.1
 python-dateutil==2.6.0
 pytz==2017.2
